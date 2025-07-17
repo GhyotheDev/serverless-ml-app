@@ -1,0 +1,16 @@
++----------------+     +----------------+     +----------------+
+|                |     |                |     |                |
+|  Web Browser   |---->|  Amazon S3     |---->|  AWS Lambda    |
+|                |     |  (Image Store) |     |  (Processing)  |
++----------------+     +----------------+     +-------+--------+
+        |                                             |
+        |                                             |
+        v                                             v
++----------------+                           +----------------+
+|                |                           |                |
+|  API Gateway   |-------------------------->|  Rekognition   |
+|  (REST API)    |                           |  (ML Service)  |
++----------------+                           +----------------+
+
+Note: This is a text representation of the architecture.
+You should replace this with an actual diagram image for your portfolio.

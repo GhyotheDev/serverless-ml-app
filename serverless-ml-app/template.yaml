@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Machine Learning Application using AWS Rekognition
+
+Resources:
+  # S3 Bucket for storing images
+  ImageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE, HEAD]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
+  # Lambda function for image analysis
+  ImageAnalysisFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: image_analysis.lambda_handler
+      Runtime: python3.9
+      Timeout: 30
+      MemorySize: 256
+      Policies:
+        - AmazonRekognitionFullAccess
+        - S3ReadPolicy:
+            BucketName: !Ref ImageBucket
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref ImageBucket
+            Events: s3:ObjectCreated:*
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /analyze
+            Method: post
+
+  # API Gateway for direct image upload
+  ImageAnalysisApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  ImageBucketName:
+    Description: "S3 bucket for image uploads"
+    Value: !Ref ImageBucket
+
+  ImageAnalysisFunction:
+    Description: "Lambda function ARN"
+    Value: !GetAtt ImageAnalysisFunction.Arn
+
+  ImageAnalysisApi:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${ImageAnalysisApi}.execute-api.${AWS::Region}.amazonaws.com/prod/analyze"
+
+  WebsiteURL:
+    Description: "URL for the web application"
+    Value: !Sub "https://${ImageBucket}.s3-website-${AWS::Region}.amazonaws.com"
